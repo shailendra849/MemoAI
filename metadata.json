@@ -1,0 +1,9 @@
+{
+  "name": "MemoAI",
+  "description": "AI-powered meeting summarizer with multi-language voice-to-text transcription and concise notes.",
+  "requestFramePermissions": [
+    "microphone",
+    "display-capture"
+  ],
+  "majorCapabilities": []
+}

@@ -1,0 +1,58 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for MeetingNote
+    function isValidMeetingNote(data) {
+      return data.keys().hasAll(['title', 'timestamp', 'transcript', 'summary', 'language', 'userId'])
+        && data.title is string && data.title.size() <= 200
+        && data.transcript is string && data.transcript.size() <= 1000000
+        && data.summary is string && data.summary.size() <= 50000
+        && data.language is string && data.language.size() <= 50
+        && data.userId == request.auth.uid;
+    }
+
+    match /notes/{noteId} {
+      allow get: if isValidId(noteId) && (isOwner(existing().userId) || existing().get('isPublic', false) == true);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() && isValidId(noteId) && isValidMeetingNote(incoming());
+      
+      allow update: if isOwner(existing().userId) 
+        && isValidMeetingNote(incoming())
+        && incoming().userId == existing().userId
+        && (
+          // Allow toggling public status or updating title/summary (AI refinement)
+          incoming().diff(existing()).affectedKeys().hasAny(['isPublic', 'title', 'summary', 'transcript'])
+        );
+        
+      allow delete: if isOwner(existing().userId);
+    }
+  }
+}

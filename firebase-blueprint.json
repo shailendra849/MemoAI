@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "MeetingNote": {
+      "title": "Meeting Note",
+      "description": "Stored transcriptions and summaries of meetings",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "transcript": { "type": "string" },
+        "summary": { "type": "string" },
+        "language": { "type": "string" },
+        "audioBase64": { "type": "string" },
+        "userId": { "type": "string" },
+        "isPublic": { "type": "boolean" }
+      },
+      "required": ["title", "timestamp", "transcript", "summary", "language", "userId"]
+    }
+  },
+  "firestore": {
+    "/notes/{noteId}": {
+      "schema": "MeetingNote",
+      "description": "Top-level collection for meeting notes"
+    }
+  }
+}
